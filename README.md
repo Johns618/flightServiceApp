@@ -22,8 +22,8 @@ Create a web application that allows a user to search for flights and display th
 Springboot, Java, Jquery, Javascript, HTML
 
 ## How to Run
-* Clone this repository
-* Navigate to this repository location via command line
+* Clone this repository 'git clone https://github.com/Johns618/flightServiceApp.git'
+* Navigate 'cd' to this repository location via command line
 * Execute the following command: 'mvn spring-boot:run'
 * Once the application has been started access the UI using this link: http://localhost:8080/index.html
 
