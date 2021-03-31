@@ -35,7 +35,7 @@ Springboot, Java, Jquery, Javascript, HTML
 * Query flight table by typing in the input fields. 
 
 ## Notes
-To demonstate the efficiency of the table search options when paired with a database. I used H2 database engine to temporarily house the provided data in flights.csv. Clicking the 'Create Database' button will automatically generate a temporary database and store flights.csv to be searched in the table below. The real world use of this application will connect to an existing database thus not needing to create its own. This would eliminating the minute wait time. 
+To demonstate the efficiency of the table search options when paired with a database. I used H2 database engine to temporarily house the provided data in flights.csv. Clicking the 'Create Database' button will automatically generate a temporary database and store flights.csv to be searched in the table below. The real world use of this application will connect to an existing database thus not needing to create its own. This would eliminate the minute wait time. 
 
 Please feel free to reach out for any questions. Thank you!
 
