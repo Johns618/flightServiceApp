@@ -2,158 +2,18 @@
 
 var originSites;
 var destinationSites;
+var server = false;
 
 $( document ).ready(function() {
 	
-	//Sets input fields functionalities
-	setInputFields();
-		
-});
-
-
-function setInputFields(){
-	
-	$('#originSearch').attr('disabled', true);
-	$('#destinationSearch').attr('disabled', true);
-	
-	$("#createDatabase" ).on("click", function() {	
-	
+	//Sets Create Database functionalities
+	$("#createDatabase" ).on("click", function() {			
 		createDatabase();
 	});	
 	
-	
-	//Origin Search input
-	$("#originSearch" ).on("keyup change focus", function() {	
-		
-		var type =  $('#originSearch').val();		
-		var site = "origin";
-					
-		autofill(type, site);		
-		filterFlightTable(type, site);
-	});
-	
-	//Destination Search input
-	$("#destinationSearch" ).on("keyup change focus", function() {	
-		
-		var type =  $('#destinationSearch').val();		
-		var site = "destination"
-					
-		autofill(type, site);		
-		filterFlightTable(type, site);
-	});
-	
-	
-}
+});
 
-
-//Autofill functionality
-function autofill(type, site) {
-  
-	if(!type) {
-	autofillClearAndHide(site);
-    return;
-  }
-
-	//Populate autofill	dropdown
-	var siteList;
-	var onclick;
-	
-	if(site == 'origin'){
-		
-		siteList = originSites;	
-		onclick = "originSearch.value=this.innerText;autocomplete_result.innerHTML='';autocomplete_result.style.display='none';filterFlightTable(this.innerText,'origin');";
-	}
-	
-	else if(site == 'destination'){
-		
-		siteList = destinationSites;
-		onclick = "destinationSearch.value=this.innerText;autocomplete_destination_result.innerHTML='';autocomplete_destination_result.style.display='none';filterFlightTable(this.innerText,'destination');";
-		
-	}
-		
-	var a = new RegExp("^" + type, "i");
-	  for(var x = 0, b = document.createDocumentFragment(), c = false; x < siteList.length; x++) {
-	    if(a.test(siteList[x])) {
-	      c = true;
-	      var d = document.createElement("p");
-	      d.innerText = siteList[x];
-	      d.setAttribute("onclick", onclick);
-	      b.appendChild(d);
-	    }
-	  }
-	  
-	  if(c == true) {
-		  
-		  
-		  if(site == 'origin'){
-			  
-			  	autocomplete_result.innerHTML = "";
-			    autocomplete_result.style.display = "block";
-			    autocomplete_result.appendChild(b);
-				
-			}
-			
-			else if(site == 'destination'){
-				
-				autocomplete_destination_result.innerHTML = "";
-				autocomplete_destination_result.style.display = "block";
-			    autocomplete_destination_result.appendChild(b);
-			}
-		  
-	    
-	    return;
-	  }
-	  
-	  autofillClearAndHide(site);
-	}
-
-//Hide Autofill
-function autofillClearAndHide(site) {
-	
-	  if(site == 'origin'){
-		  
-		  autocomplete_result.innerHTML = "";
-		  autocomplete_result.style.display = "none";
-			
-		}
-		
-		else if(site == 'destination'){
-			
-			autocomplete_destination_result.innerHTML = "";
-			autocomplete_destination_result.style.display = "none";
-		}
-	  
-	}
-	
-//Table input filter	
-function filterFlightTable(type, site) {
-	
-	var className;	
-	
-	if(site == 'origin'){
-		
-		className = '.originName';		
-	}
-	
-	else if(site == 'destination'){
-		
-		className = '.destinationName';	
-		
-	}
-	
-	var dtable = $('#flightTable').DataTable();
-			
-	dtable.columns(className).search( 
-			type,
-			true,
-			true
-	).draw();
-	
-	$(".dataTables_length").hide();
-	$(".dataTables_filter").hide();
-}
-
-//Creates Temporary Database
+//Creates Database
 function createDatabase() {
 
 		var url = "http://localhost:8080/getFlights"
@@ -176,69 +36,35 @@ function createDatabase() {
 			
 			console.log("success create db loading data...")
 			
+			server = true;			
+			
+			//Loads Flight data to Table 
 			loadData();
-			populateAutofillOrigin();
-			populateAutofillDestination();
 			
 			$('#originSearch').attr('disabled', false);
 			$('#destinationSearch').attr('disabled', false);
 				
-			$("#waitMsg").hide();
 			$("#createDatabase").hide();
 					
 		}).fail(function (xhr) {
 			
-			alert("failed to create db")
-			$('#createDatabase').attr("disabled", false);
+			console.log("failure create db loading backup data...")
+			
+			//Load Backup Flight Data if Failure Detected
+			loadDataBackup();
+			
+			$('#originSearch').attr('disabled', false);
+			$('#destinationSearch').attr('disabled', false);
+				
+			$("#createDatabase").hide();
 			
 		});
 }
-
-//Populate autofill	dropdowns
-function populateAutofillOrigin(){
-	
-	var url = "http://localhost:8080/getAutofill?site=origin"
-	
-	var siteArray = [];
-	
-	$.ajax({
-		type: "GET",
-		url: url,              
-		dataType: "json",
-		cache: false,
-		async: false,
-		contentType: "application/json"  }).done(function(result) {
-			
-			originSites = result;
-		});
-	
-	return siteArray;
-}
-
-function populateAutofillDestination(){
-	
-	var url = "http://localhost:8080/getAutofill?site=destination"
-	
-	var siteArray = [];
-	
-	$.ajax({
-		type: "GET",
-		url: url,              
-		dataType: "json",
-		cache: false,
-		async: false,
-		contentType: "application/json"  }).done(function(result) {
-			
-			destinationSites = result;
-		});
-	
-	return siteArray;
-}
-
 
 //Loads Flight data to Table 
 function loadData(){
 	
+	//Create Table
 	var url = "http://localhost:8080/getFlights"
 	
 	var healthTable = $('#flightTable').DataTable({
@@ -487,15 +313,264 @@ function loadData(){
 		],
 	} );
 	
+	//Define AutoFill Options
+	populateAutofillOrigin();
+	populateAutofillDestination();
+	
+	//Set Input	
+	setInputFields();
 	$(".dataTables_length").hide();
 	$(".dataTables_filter").hide();
 }
 
+//Load Backup Flight Data if Failure Detected
+function loadDataBackup(){
+	
+	//Create Table
+	var tableRows = createRows(chunk(excelData.replace(/\n/g, ",").split(","),15));
+	
+	var tbl = $('#flightTable').DataTable( {
+		"sDom": 'lrtip',
+		"bFilter": true,
+		"bLengthChange": false,
+		"processing": true,
+		"pagingType": "simple",
+		"bLengthChange": true,
+		"data": tableRows,
+        "createdRow": function ( row, data, index ) {
+        
+            $('td', row).eq(11).addClass('destination');
+            $('td', row).eq(12).addClass('origin');
+            $('td', row).eq(13).addClass('destinationName');
+            $('td', row).eq(14).addClass('originName');
+
+		    }
+		});
+	
+	//Define AutoFill Options
+	destinationSites = destination;
+	originSites = origin;
+	
+	//Set Input
+	setInputFields();
+	  	  
+	  $(".dataTables_length").hide();
+	  $(".dataTables_filter").hide();
+	 	
+}
+
+//Autofill functionality
+function autofill(type, site) {
+  
+	if(!type) {
+	autofillClearAndHide(site);
+    return;
+  }
+
+	//Populate autofill	dropdown
+	var siteList;
+	var onclick;
+	
+	if(site == 'origin'){
+		
+		siteList = originSites;	
+		onclick = "originSearch.value=this.innerText;autocomplete_result.innerHTML='';autocomplete_result.style.display='none';filterFlightTable(this.innerText,'origin');";
+	}
+	
+	else if(site == 'destination'){
+		
+		siteList = destinationSites;
+		onclick = "destinationSearch.value=this.innerText;autocomplete_destination_result.innerHTML='';autocomplete_destination_result.style.display='none';filterFlightTable(this.innerText,'destination');";
+		
+	}
+		
+	var a = new RegExp("^" + type, "i");
+	  for(var x = 0, b = document.createDocumentFragment(), c = false; x < siteList.length; x++) {
+	    if(a.test(siteList[x])) {
+	      c = true;
+	      var d = document.createElement("p");
+	      d.innerText = siteList[x];
+	      d.setAttribute("onclick", onclick);
+	      b.appendChild(d);
+	    }
+	  }
+	  
+	  if(c == true) {
+		  
+		  
+		  if(site == 'origin'){
+			  
+			  	autocomplete_result.innerHTML = "";
+			    autocomplete_result.style.display = "block";
+			    autocomplete_result.appendChild(b);
+				
+			}
+			
+			else if(site == 'destination'){
+				
+				autocomplete_destination_result.innerHTML = "";
+				autocomplete_destination_result.style.display = "block";
+			    autocomplete_destination_result.appendChild(b);
+			}
+		  
+	    
+	    return;
+	  }
+	  
+	  autofillClearAndHide(site);
+	}
+
+//Populate autofill	Origin Dropdown
+function populateAutofillOrigin(){
+	
+	var url = "http://localhost:8080/getAutofill?site=origin"
+	
+	var siteArray = [];
+	
+	$.ajax({
+		type: "GET",
+		url: url,              
+		dataType: "json",
+		cache: false,
+		async: false,
+		contentType: "application/json"  }).done(function(result) {
+			
+			originSites = result;
+		});
+	
+	return siteArray;
+}
+
+//Populate autofill	Destination Dropdown
+function populateAutofillDestination(){
+	
+	var url = "http://localhost:8080/getAutofill?site=destination"
+	
+	var siteArray = [];
+	
+	$.ajax({
+		type: "GET",
+		url: url,              
+		dataType: "json",
+		cache: false,
+		async: false,
+		contentType: "application/json"  }).done(function(result) {
+			
+			destinationSites = result;
+		});
+	
+	return siteArray;
+}
 
 
 
+//Hide Autofill Display
+function autofillClearAndHide(site) {
+	
+	  if(site == 'origin'){
+		  
+		  autocomplete_result.innerHTML = "";
+		  autocomplete_result.style.display = "none";
+			
+		}
+		
+		else if(site == 'destination'){
+			
+			autocomplete_destination_result.innerHTML = "";
+			autocomplete_destination_result.style.display = "none";
+		}
+	  
+	}
 
 
+//Set Input Fields
+function setInputFields(){
+	
+	$('#originSearch').attr('disabled', true);
+	$('#destinationSearch').attr('disabled', true);
+	
+	
+	//Origin Search input
+	$("#originSearch" ).on("keyup change focus", function() {	
+		
+		var type =  $('#originSearch').val();		
+		var site = "origin";
+					
+		autofill(type, site);		
+		filterFlightTable(type, site);
+	});
+	
+	//Destination Search input
+	$("#destinationSearch" ).on("keyup change focus", function() {	
+		
+		var type =  $('#destinationSearch').val();		
+		var site = "destination"
+					
+		autofill(type, site);		
+		filterFlightTable(type, site);
+	});	
+}
 
- 
+//Table input filter	
+function filterFlightTable(type, site) {
+		
+	var className;	
+	
+	if(site == 'origin'){
+		
+		className = '.originName';		
+	}
+	
+	else if(site == 'destination'){
+		
+		className = '.destinationName';	
+		
+	}
+	
+	var dtable = $('#flightTable').DataTable();
+	
+	//Handle if server fails
+	if(server){
+		
+		dtable.columns(className).search( 
+				type,
+				true,
+				true
+		).draw();
+		
+			
+	}else if(!server){
+	
+		if(site == 'origin'){
+			
+			dtable.columns(14).search(type).draw();		
+		}
+		
+		else if(site == 'destination'){
+			
+			dtable.columns(13).search(type).draw();
+			
+		}		
+	}
+							
+	$(".dataTables_length").hide();
+	$(".dataTables_filter").hide();
+}
 
+//Creates Table Rows
+function createRows(tblRows){
+		
+	var newRows = [];
+			
+	for (var i = 0; i < tblRows.length; i++) {
+				  
+		if(tblRows[i].length == 15){
+									
+			newRows.push(tblRows[i]);						
+		}								
+	}
+			
+	return newRows;
+}
+
+const chunk = (arr, size) => arr.reduce((acc, e, i) => (i % size ? acc[acc.length - 1].push(e) : acc.push([e]), acc), []);
